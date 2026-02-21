@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MML Player</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" crossorigin="anonymous" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fcfcfc;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #fcfcfc;
+      padding: 30px;
+    }
+    
+    h1 {
+      margin-bottom: 30px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid #e6e6e6;
+      color: #0d0d0d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: "Roboto Flex", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 600;
+      font-stretch: 110%;
+      letter-spacing: -0.2px;
+    }
+    
+    .download-btn {
+      padding: 8px 16px;
+      background: #fcfcfc;
+      color: #1741EA;
+      border: 0.8px solid #8099FF;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      min-width: 100px;
+      transition: background 0.2s;
+    }
+    
+    .download-btn:hover {
+      background: #f0f4ff;
+    }
+    
+    .upload-btn {
+      padding: 8px 16px;
+      background: #1741EA;
+      color: #fcfcfc;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      min-width: 100px;
+      transition: background 0.2s;
+    }
+    
+    .upload-btn:hover {
+      background: #0d2db8;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .controls button {
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    
+    .play-btn {
+      background: #1741EA;
+      color: #fcfcfc;
+      border: none;
+    }
+    
+    .play-btn:hover {
+      background: #0d2db8;
+    }
+    
+    .play-btn.disabled {
+      background: #e6e6e6;
+      color: #999;
+      cursor: not-allowed;
+    }
+    
+    .play-btn.disabled:hover {
+      background: #e6e6e6;
+    }
+    
+    .stop-btn {
+      background: #fcfcfc;
+      color: #1741EA;
+      border: 0.8px solid #8099FF;
+    }
+    
+    .stop-btn:hover {
+      background: #f0f4ff;
+    }
+    
+    .progress-container {
+      flex: 1;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+      margin-right: auto;
+    }
+    
+    .progress-bar-wrapper {
+      position: relative;
+      width: 100%;
+      margin: 19px 0;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #f2f2f2;
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #1741EA;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    
+    .progress-time {
+      font-size: 12px;
+      color: #999;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+    }
+    
+    .tempo-control {
+      margin-bottom: 20px;
+    }
+    
+    .tempo-control label {
+      font-weight: 500;
+      margin-right: 8px;
+      color: #1a1a1a;
+    }
+    
+    .tempo-control input {
+      width: 200px;
+      padding: 8px 12px;
+      border: 2px solid #e8e8e8;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: "Pretendard", 'Courier New', monospace;
+      background: #fcfcfc;
+      color: #333;
+    }
+    
+    .tempo-control input:focus {
+      outline: none;
+      border-color: #CCD6FF;
+    }
+    
+    .channels {
+      margin-bottom: 10px;
+    }
+    
+    .channel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 15px;
+      background: #F0F2F5;
+      border-radius: 8px;
+      position: relative;
+    }
+    
+    .channel-header {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .channel-header-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .channel-header-right {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    
+    .clear-text-icon {
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      color: #1741EA;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .clear-text-icon:hover {
+      background: #e0e0e0;
+      color: #0d2db8;
+    }
+    
+    .clear-text-icon svg {
+      width: 21px;
+      height: 21px;
+    }
+    
+    .copy-icon {
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      color: #1741EA;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .copy-icon:hover {
+      background: #e0e0e0;
+      color: #0d2db8;
+    }
+    
+    .copy-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .channel select {
+      padding: 8px 12px;
+      border: 2px solid #e8e8e8;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 130px;
+      cursor: pointer;
+      background: #fcfcfc;
+      color: #1a1a1a;
+    }
+    
+    .channel select:focus {
+      outline: none;
+      border-color: #CCD6FF;
+    }
+    
+    .stereo-btn {
+      border: 2px solid #e8e8e8;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 74px;
+      cursor: pointer;
+      background: #fcfcfc;
+      color: #666;
+      transition: all 0.2s;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .stereo-btn.active {
+      border-color: #8099FF;
+      color: #1741EA;
+      background: #CCD6FF;
+    }
+    
+    .stereo-btn:hover {
+      border-color: #CCD6FF;
+    }
+    
+    .text-container {
+      position: relative;
+    }
+    
+    .editable-text {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: "Pretendard", 'Courier New', monospace;
+      min-height: 240px;
+      max-height: 240px;
+      box-sizing: border-box;
+      background: #fcfcfc;
+      line-height: 1.5;
+      color: #333;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      overflow-y: auto;
+      outline: none;
+    }
+    
+    .editable-text:empty:before {
+      content: attr(data-placeholder);
+      color: #999;
+    }
+    
+    .editable-text:focus {
+      border-color: #CCD6FF;
+    }
+    
+    .editable-text .cmd {
+      color: #1741EA;
+    }
+    
+    .editable-text .playing {
+      color: #5D17EA;
+      font-weight: 400;
+    }
+    
+    .editable-text.playing-active {
+      color: rgba(51, 51, 51, 0.3);
+    }
+    
+    .editable-text.playing-active .cmd {
+      color: rgba(23, 65, 234, 0.3);
+    }
+    
+    .editable-text.playing-active .playing {
+      color: #5D17EA !important;
+    }
+    
+    .editable-text.playing-active .playing .cmd {
+      color: #1741EA !important;
+    }
+    
+    .editable-text.disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    
+    .channel button {
+      padding: 0;
+      background: #b3b3b3;
+      color: #fcfcfc;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .channel button:hover {
+      background: #8a8a8a;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 24px;
+      background: #1741EA;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .toggle-switch.off {
+      background: #ddd;
+    }
+    
+    .toggle-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-switch.off .toggle-knob {
+      transform: translateX(0);
+    }
+    
+    .toggle-switch:not(.off) .toggle-knob {
+      transform: translateX(24px);
+    }
+    
+    .add-channel {
+      padding: 8px 16px;
+      background: #fcfcfc;
+      color: #1741EA;
+      border: 0.8px solid #8099FF;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 40px;
+      min-width: 100px;
+    }
+    
+    .add-channel:hover {
+      background: #f0f4ff;
+    }
+    
+    .length-warning {
+      font-size: 13px;
+      color: #666;
+      margin-top: 10px;
+      margin-bottom: 12px;
+      padding: 14px 12px 10px 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      border-left: 3px solid #ddd;
+      display: none;
+      line-height: 1.6;
+    }
+    
+    .length-warning.show {
+      display: block;
+    }
+    
+    .length-warning strong {
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+    
+    .length-warning-item {
+      margin: 4px 0;
+      margin-left: 0;
+    }
+    
+    .channel-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    
+    .syntax-error {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .channel-count {
+      font-size: 12px;
+      color: #999;
+      text-align: right;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+        <div style="display: flex; align-items: center; gap: 16px;">
+    <span>MML Player</span>
+    <a href="musicxml_mml_converter.html" style="font-size: 14px; color: #1741EA; text-decoration: none; font-weight: 400;">MusicXML to MML Converter →</a>
+  </div>
+      
+      <div class="header-buttons">
+        <button class="download-btn" onclick="exportToFile()">TXT파일 다운로드</button>
+        <input type="file" id="fileInput" class="file-input" accept=".txt" onchange="loadFromFile(event)">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">TXT파일 불러오기</button>
+      </div>
+    </h1>
+    
+    <div class="controls">
+      <div class="progress-container">
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar" id="progressBar" onclick="seekToPosition(event)">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-time" id="progressTime">0:00 / 0:00</div>
+        </div>
+      </div>
+      <button class="stop-btn" onclick="stop()">⏹ 정지</button>
+      <button class="play-btn" id="playBtn" onclick="play()">▶ 재생</button>
+    </div>
+    
+    <div class="tempo-control">
+      <label>전역 템포:</label>
+      <input type="text" id="tempoInput" value="T120" placeholder="T120">
+    </div>
+
+    <div class="length-warning show" id="volumeNotice">
+  유의사항 : V명령어의 볼륨은 정확하지 않습니다.
+  <br>
+  O, N명령어는 지원하지 않습니다.
+  <br>
+  특별히 명령어를 선언하지 않았을 때의 초기값은 V12 L4 O4입니다. (인겜: V8)
+</div>
+    
+    <div class="length-warning" id="lengthWarning"></div>
+    <div class="length-warning" id="fileWarning"></div>
+    <div class="length-warning" id="copyNotification"></div>
+    
+    <div class="channels" id="channelsContainer"></div>
+    
+    <button class="add-channel" onclick="addChannel()">+ 채널 추가</button>
+  </div>
+
+  <script>
+    let channels = [];
+    let channelIdCounter = 0;
+    let isPlaying = false;
+    let playbackStartTime = 0;
+    let playbackDuration = 0;
+    let progressInterval = null;
+    let activeSynths = [];
+    let masterCompressor = null;
+    let currentGlobalTempo = 120;
+    let currentActiveChannelCount = 0;
+    let autoStopTimer = null;
+    let transportStopHandler = null;
+    let channelTimelines = {};
+    let currentPlaybackTempoMap = null;
+
+    const INSTRUMENTS = [
+      'piano', 'violin', 'flute', 'lute', 'harp', 'chalumeau', 'drum'
+    ];
+
+    addChannel();
+
+    function addChannel() {
+      const id = channelIdCounter++;
+      channels.push({
+        id: id,
+        instrument: 'piano',
+        notation: '',
+        enabled: true,
+        stereo: false
+      });
+      renderChannels();
+    }
+
+    function removeChannel(id) {
+      channels = channels.filter(ch => ch.id !== id);
+      renderChannels();
+      checkChannelLengths();
+    }
+
+    function updateChannel(id, field, value) {
+      const channel = channels.find(ch => ch.id === id);
+      if (channel) {
+        channel[field] = value;
+        if (field === 'notation') {
+          updateCharCount(id);
+          checkSyntaxErrors(id);
+          checkChannelLengths();
+          updateSyntaxColor(id);
+        }
+      }
+    }
+    
+    function updateSyntaxColor(id) {
+      const div = document.querySelector(`[data-channel-id="${id}"] .editable-text`);
+      if (!div) return;
+      
+      const channel = channels.find(ch => ch.id === id);
+      if (!channel) return;
+      
+      const cursorPos = saveCursorPosition(div);
+      div.innerHTML = colorSyntax(channel.notation);
+      restoreCursorPosition(div, cursorPos);
+    }
+    
+    function colorSyntax(text) {
+      if (!text) return '';
+      
+      return text.replace(/([VLT]\d+|[><]+)/g, '<span class="cmd">$1</span>');
+    }
+    
+    function saveCursorPosition(element) {
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return 0;
+      
+      const range = selection.getRangeAt(0);
+      const preRange = range.cloneRange();
+      preRange.selectNodeContents(element);
+      preRange.setEnd(range.endContainer, range.endOffset);
+      
+      return preRange.toString().length;
+    }
+    
+    function restoreCursorPosition(element, position) {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      
+      let charCount = 0;
+      let found = false;
+      
+      function traverseNodes(node) {
+        if (found) return;
+        
+        if (node.nodeType === Node.TEXT_NODE) {
+          const length = node.textContent.length;
+          if (charCount + length >= position) {
+            range.setStart(node, position - charCount);
+            range.collapse(true);
+            found = true;
+            return;
+          }
+          charCount += length;
+        } else {
+          for (let i = 0; i < node.childNodes.length; i++) {
+            traverseNodes(node.childNodes[i]);
+            if (found) return;
+          }
+        }
+      }
+      
+      traverseNodes(element);
+      
+      if (found) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+    
+    function handleInput(id, element) {
+      const text = element.innerText;
+      updateChannel(id, 'notation', text);
+    }
+    
+    function handleKeydown(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.execCommand('insertLineBreak');
+      }
+    }
+    
+    function toggleChannel(id) {
+      const channel = channels.find(ch => ch.id === id);
+      if (channel) {
+        channel.enabled = !channel.enabled;
+        renderChannels();
+        checkChannelLengths();
+      }
+    }
+    
+    function toggleStereo(id) {
+      const channel = channels.find(ch => ch.id === id);
+      if (channel) {
+        channel.stereo = !channel.stereo;
+        renderChannels();
+      }
+    }
+    
+    function clearChannelText(id) {
+      const channel = channels.find(ch => ch.id === id);
+      if (channel) {
+        channel.notation = '';
+        renderChannels();
+        checkChannelLengths();
+      }
+    }
+    
+    function copyChannelText(id) {
+      const channel = channels.find(ch => ch.id === id);
+      if (channel && channel.notation) {
+        let textToCopy = channel.notation;
+        
+        if (!textToCopy.trim().match(/^T\d+/)) {
+          const globalTempo = document.getElementById('tempoInput').value.trim();
+          if (globalTempo) {
+            textToCopy = globalTempo + ' ' + textToCopy;
+          }
+        }
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const notificationDiv = document.getElementById('copyNotification');
+          if (notificationDiv) {
+            notificationDiv.innerHTML = '<strong>복사 완료</strong><br>클립보드에 복사되었습니다!';
+            notificationDiv.classList.add('show');
+            
+            setTimeout(() => {
+              notificationDiv.classList.remove('show');
+            }, 2000);
+          }
+        }).catch(err => {
+          console.error('복사 실패:', err);
+        });
+      }
+    }
+    
+    function updateCharCount(id) {
+      const channel = channels.find(ch => ch.id === id);
+      if (channel) {
+        const charCount = channel.notation.replace(/\s/g, '').length;
+        const countElement = document.querySelector(`[data-channel-id="${id}"] .channel-count`);
+        if (countElement) {
+          countElement.textContent = charCount;
+        }
+      }
+    }
+    
+    function checkSyntaxErrors(id) {
+      const channel = channels.find(ch => ch.id === id);
+      if (!channel) return;
+      
+      const errorDiv = document.querySelector(`[data-channel-id="${id}"] .syntax-error`);
+      const errors = checkSyntaxErrorsForText(channel.notation);
+      
+      if (errorDiv) {
+        errorDiv.textContent = errors.join(', ');
+        if (errors.length > 0) {
+          errorDiv.classList.add('show');
+        } else {
+          errorDiv.classList.remove('show');
+        }
+      }
+    }
+    
+    function checkSyntaxErrorsForText(text) {
+      if (!text.trim()) return [];
+      
+      const errors = [];
+      const foundChars = new Set();
+      
+      if (/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text)) {
+        errors.push('한글은 사용할 수 없습니다');
+      }
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (!/[A-Za-z0-9\s><+\-&.\n\r]/.test(char)) {
+          if (!foundChars.has(char)) {
+            foundChars.add(char);
+            errors.push(`잘못된 문자: ${char}`);
+          }
+        }
+      }
+      
+      const vMatches = text.matchAll(/V(\d+)/g);
+      for (const match of vMatches) {
+        const vol = parseInt(match[1]);
+        if (vol < 0 || vol > 15) {
+          errors.push(`잘못된 볼륨: V${match[1]} (0~15 사용)`);
+        }
+      }
+      
+      const lMatches = text.matchAll(/L(\d+)/g);
+      for (const match of lMatches) {
+        const len = parseInt(match[1]);
+        if (len < 1) {
+          errors.push(`잘못된 길이: L${match[1]}`);
+        }
+      }
+      
+      const tMatches = text.matchAll(/T(\d+)/g);
+      for (const match of tMatches) {
+        const tempo = parseInt(match[1]);
+        if (tempo < 1) {
+          errors.push(`잘못된 템포: T${match[1]}`);
+        }
+      }
+      
+      const tokens = text.trim().split(/\s+/);
+      
+      tokens.forEach(token => {
+        if (token.includes('&')) {
+          const parts = token.split('&');
+          for (let i = 1; i < parts.length; i++) {
+            const part = parts[i].replace(/^[><]+/, '');
+            if (!part || !/^[A-GR]/.test(part)) {
+              errors.push(`& 뒤에 음표가 필요합니다`);
+              break;
+            }
+          }
+        }
+        
+        for (let i = 0; i < token.length; i++) {
+          const char = token[i];
+          const upperChar = char.toUpperCase();
+          
+          if (/[A-Z]/i.test(char)) {
+            if (!'ABCDEFGR><+-&.VLT'.includes(upperChar)) {
+              if (!foundChars.has(upperChar)) {
+                foundChars.add(upperChar);
+                errors.push(`잘못된 문자: ${char}`);
+              }
+            } else if (!'ABCDEFGR><+-&.'.includes(upperChar)) {
+              const nextChar = token[i + 1];
+              if (!/\d/.test(nextChar)) {
+                if (!foundChars.has(upperChar)) {
+                  foundChars.add(upperChar);
+                  errors.push(`잘못된 문자: ${char}`);
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      return errors;
+    }
+
+    function renderChannels() {
+      const container = document.getElementById('channelsContainer');
+      container.innerHTML = channels.map(ch => {
+        const charCount = ch.notation.replace(/\s/g, '').length;
+        const errors = checkSyntaxErrorsForText(ch.notation);
+        const colored = colorSyntax(ch.notation);
+        
+        return `
+        <div class="channel" data-channel-id="${ch.id}">
+          <div class="channel-header">
+            <div class="channel-header-left">
+              <select onchange="updateChannel(${ch.id}, 'instrument', this.value)">
+                ${INSTRUMENTS.map(inst => 
+                  `<option value="${inst}" ${ch.instrument === inst ? 'selected' : ''}>
+                    ${inst.charAt(0).toUpperCase() + inst.slice(1)}
+                  </option>`
+                ).join('')}
+              </select>
+              <div class="toggle-switch ${ch.enabled ? '' : 'off'}" onclick="toggleChannel(${ch.id})" title="${ch.enabled ? '켜짐' : '꺼짐'}">
+                <div class="toggle-knob"></div>
+              </div>
+              <button class="stereo-btn ${ch.stereo ? 'active' : ''}" onclick="toggleStereo(${ch.id})">
+                STEREO
+              </button>
+            </div>
+            <div class="channel-header-right">
+              <span class="copy-icon" onclick="copyChannelText(${ch.id})" title="텍스트 복사">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </span>
+              <div style="width: 4px;"></div>
+              <span class="clear-text-icon" onclick="clearChannelText(${ch.id})" title="텍스트 지우기">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </span>
+              <div style="width: 10px;"></div>
+              <button onclick="removeChannel(${ch.id})">✕</button>
+            </div>
+          </div>
+          <div class="text-container">
+            <div 
+              class="editable-text" 
+              contenteditable="true"
+              oninput="handleInput(${ch.id}, this)"
+              onkeydown="handleKeydown(event)"
+              data-placeholder="V12 L4 C D E F G A B >C ..."
+            >${colored}</div>
+          </div>
+          <div class="channel-footer">
+            <div class="syntax-error">${errors.length > 0 ? errors.join(', ') : ''}</div>
+            <div class="channel-count">공백 제외 ${charCount}</div>
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    function createInstrument(instrumentName, volume, activeChannelCount, useStereo = false) {
+      const volumeReduction = Math.min(activeChannelCount * 2, 12);
+      const volumeDb = volume === 0 
+        ? -Infinity
+        : 20 * Math.log10(volume / 12) - 10 - volumeReduction;
+      
+      // 미묘한 스테레오 패닝: -0.4 ~ +0.4 범위의 랜덤 패닝
+      const panValue = useStereo ? (Math.random() * 0.8 - 0.4) : 0;
+      const panner = new Tone.Panner(panValue).connect(masterCompressor);
+      const destination = panner;
+      
+      switch(instrumentName.toLowerCase()) {
+        case 'piano':
+          const pianoMain = new Tone.Synth({
+            oscillator: { 
+              type: "sine3",
+              partials: [1, 0.5, 0.3, 0.1]
+            },
+            envelope: { 
+              attack: 0.001,
+              decay: 4.0,
+              sustain: 0,
+              release: 2.0
+            },
+            volume: volumeDb - 1
+          });
+          
+          const pianoFM = new Tone.FMSynth({
+            harmonicity: 2,
+            modulationIndex: 2,
+            oscillator: { type: "sine" },
+            envelope: { 
+              attack: 0.001,
+              decay: 2.0,
+              sustain: 0,
+              release: 1.0
+            },
+            modulation: { type: "sine" },
+            modulationEnvelope: {
+              attack: 0.001,
+              decay: 0.5,
+              sustain: 0,
+              release: 0.5
+            },
+            volume: volumeDb - 6
+          });
+          
+          const attackNoise = new Tone.NoiseSynth({
+            noise: { type: "white" },
+            envelope: {
+              attack: 0.001,
+              decay: 0.02,
+              sustain: 0
+            },
+            volume: volumeDb - 23
+          });
+          
+          pianoMain.connect(destination);
+          pianoFM.connect(destination);
+          attackNoise.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              const noteNum = Tone.Frequency(note).toMidi();
+              // 가온도(C4 = 60) 이상일 때만 고음 감쇠 적용
+              const volumeAdjust = noteNum > 60 ? Math.max(0, (noteNum - 60) * -0.8) : 0;
+              
+              const mainBaseVol = volumeDb - 1;
+              const fmBaseVol = volumeDb - 6;
+              const noiseBaseVol = volumeDb - 23;
+              
+              // 부드럽게 볼륨 증가
+              pianoMain.volume.linearRampTo(mainBaseVol + volumeAdjust, 0.005, time);
+              pianoFM.volume.linearRampTo(fmBaseVol + volumeAdjust, 0.005, time);
+              attackNoise.volume.linearRampTo(noiseBaseVol + volumeAdjust, 0.005, time);
+              
+              pianoMain.triggerAttackRelease(note, duration, time);
+              pianoFM.triggerAttackRelease(note, duration, time);
+              attackNoise.triggerAttackRelease(duration, time);
+              
+              // 부드럽게 원래 볼륨으로
+              pianoMain.volume.linearRampTo(mainBaseVol, 0.005, time + duration);
+              pianoFM.volume.linearRampTo(fmBaseVol, 0.005, time + duration);
+              attackNoise.volume.linearRampTo(noiseBaseVol, 0.005, time + duration);
+            },
+            volume: {
+              set value(val) {
+                pianoMain.volume.value = val - 1;
+                pianoFM.volume.value = val - 6;
+                attackNoise.volume.value = val - 23;
+              }
+            },
+            dispose: () => {
+              pianoMain.dispose();
+              pianoFM.dispose();
+              attackNoise.dispose();
+              panner.dispose();
+            }
+          };
+        
+        case 'violin':
+          const violinMain = new Tone.Synth({
+            oscillator: { 
+              type: "sawtooth",
+              partials: [1, 0.6, 0.3, 0.15, 0.08]
+            },
+            envelope: { 
+              attack: 0.15,
+              decay: 0.15, 
+              sustain: 0.7,
+              release: 0.4 
+            },
+            volume: volumeDb - 8
+          });
+          
+          const violinTriangle = new Tone.Synth({
+            oscillator: { 
+              type: "triangle",
+              partials: [1, 0.4, 0.2, 0.1]
+            },
+            envelope: { 
+              attack: 0.15,
+              decay: 0.15,
+              sustain: 0.7,
+              release: 0.4
+            },
+            volume: volumeDb - 21
+          });
+          
+          const violinBowNoise = new Tone.NoiseSynth({
+            noise: { type: "pink" },
+            envelope: {
+              attack: 0.15,
+              decay: 0.1,
+              sustain: 0.05,
+              release: 0.3
+            },
+            volume: volumeDb - 30
+          });
+          
+          violinMain.connect(destination);
+          violinTriangle.connect(destination);
+          violinBowNoise.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              violinMain.triggerAttackRelease(note, duration, time);
+              violinTriangle.triggerAttackRelease(note, duration, time);
+              violinBowNoise.triggerAttackRelease(duration, time);
+            },
+            volume: {
+              set value(val) {
+                violinMain.volume.value = val - 8;
+                violinTriangle.volume.value = val - 21;
+                violinBowNoise.volume.value = val - 30;
+              }
+            },
+            dispose: () => {
+              violinMain.dispose();
+              violinTriangle.dispose();
+              violinBowNoise.dispose();
+              panner.dispose();
+            }
+          };
+        
+        case 'flute':
+          const fluteMain = new Tone.Synth({
+            oscillator: { 
+              type: "sine",
+              partials: [1, 0.2, 0.1]
+            },
+            envelope: { 
+              attack: 0.08,
+              decay: 0.1,
+              sustain: 0.6,
+              release: 0.4
+            },
+            volume: volumeDb
+          });
+          
+          const fluteBreath = new Tone.NoiseSynth({
+            noise: { type: "pink" },
+            envelope: {
+              attack: 0.08,
+              decay: 0.2,
+              sustain: 0.05,
+              release: 0.4
+            },
+            volume: volumeDb - 30
+          });
+          
+          fluteMain.connect(destination);
+          fluteBreath.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              fluteMain.triggerAttackRelease(note, duration, time);
+              fluteBreath.triggerAttackRelease(duration, time);
+            },
+            volume: {
+              set value(val) {
+                fluteMain.volume.value = val;
+                fluteBreath.volume.value = val - 30;
+              }
+            },
+            dispose: () => {
+              fluteMain.dispose();
+              fluteBreath.dispose();
+              panner.dispose();
+            }
+          };
+        
+        case 'lute':
+          const luteMain = new Tone.Synth({
+            oscillator: { 
+              type: "triangle",
+              partials: [1, 0.7, 0.4, 0.2]
+            },
+            envelope: { 
+              attack: 0.002,
+              decay: 0.4,
+              sustain: 0,
+              release: 0.3
+            },
+            volume: volumeDb
+          });
+          
+          const lutePluck = new Tone.NoiseSynth({
+            noise: { type: "brown" },
+            envelope: {
+              attack: 0.001,
+              decay: 0.03,
+              sustain: 0
+            },
+            volume: volumeDb - 20
+          });
+          
+          luteMain.connect(destination);
+          lutePluck.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              luteMain.triggerAttackRelease(note, duration, time);
+              lutePluck.triggerAttackRelease(duration, time);
+            },
+            volume: {
+              set value(val) {
+                luteMain.volume.value = val;
+                lutePluck.volume.value = val - 20;
+              }
+            },
+            dispose: () => {
+              luteMain.dispose();
+              lutePluck.dispose();
+              panner.dispose();
+            }
+          };
+        
+        case 'harp':
+          const harpMain = new Tone.Synth({
+            oscillator: { 
+              type: "sine",
+              partials: [1, 0.8, 0.5, 0.3, 0.15]
+            },
+            envelope: { 
+              attack: 0.001,
+              decay: 1.2,
+              sustain: 0,
+              release: 0.8
+            },
+            volume: volumeDb - 2
+          });
+          
+          const harpReverb = new Tone.Reverb({
+            decay: 2.5,
+            wet: 0.3
+          });
+          
+          const harpPluck = new Tone.NoiseSynth({
+            noise: { type: "pink" },
+            envelope: {
+              attack: 0.001,
+              decay: 0.02,
+              sustain: 0
+            },
+            volume: volumeDb - 25
+          });
+          
+          harpMain.connect(harpReverb);
+          harpReverb.connect(destination);
+          harpPluck.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              harpMain.triggerAttackRelease(note, duration, time);
+              harpPluck.triggerAttackRelease(duration, time);
+            },
+            volume: {
+              set value(val) {
+                harpMain.volume.value = val - 2;
+                harpPluck.volume.value = val - 25;
+              }
+            },
+            dispose: () => {
+              harpMain.dispose();
+              harpReverb.dispose();
+              harpPluck.dispose();
+              panner.dispose();
+            }
+          };
+        
+        case 'chalumeau':
+          const chalumeauMain = new Tone.Synth({
+            oscillator: { 
+              type: "sawtooth",
+              partials: [1, 0.7, 0.5, 0.3, 0.2, 0.1]
+            },
+            envelope: { 
+              attack: 0.08,
+              decay: 0.1, 
+              sustain: 0.8,
+              release: 0.5
+            },
+            volume: volumeDb - 10
+          });
+          
+          const chalumeauAttack = new Tone.NoiseSynth({
+            noise: { type: "white" },
+            envelope: {
+              attack: 0.001,
+              decay: 0.06,
+              sustain: 0
+            },
+            volume: volumeDb - 20
+          });
+          
+          const chalumeauBreath = new Tone.NoiseSynth({
+            noise: { type: "pink" },
+            envelope: {
+              attack: 0.08,
+              decay: 0.1,
+              sustain: 0.08,
+              release: 0.5
+            },
+            volume: volumeDb - 30
+          });
+          
+          chalumeauMain.connect(destination);
+          chalumeauAttack.connect(destination);
+          chalumeauBreath.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              chalumeauMain.triggerAttackRelease(note, duration, time);
+              chalumeauAttack.triggerAttackRelease(duration, time);
+              chalumeauBreath.triggerAttackRelease(duration, time);
+            },
+            volume: {
+              set value(val) {
+                chalumeauMain.volume.value = val - 10;
+                chalumeauAttack.volume.value = val - 20;
+                chalumeauBreath.volume.value = val - 30;
+              }
+            },
+            dispose: () => {
+              chalumeauMain.dispose();
+              chalumeauAttack.dispose();
+              chalumeauBreath.dispose();
+              panner.dispose();
+            }
+          };
+        
+        case 'drum':
+          const drumMain = new Tone.MembraneSynth({
+            pitchDecay: 0.25,
+            octaves: 5,
+            oscillator: { type: "sine" },
+            envelope: { 
+              attack: 0.001,
+              decay: 1.5,
+              sustain: 0,
+              release: 3.0
+            },
+            volume: volumeDb
+          });
+          
+          const drumNoise = new Tone.NoiseSynth({
+            noise: { type: "white" },
+            envelope: {
+              attack: 0.001,
+              decay: 0.06,
+              sustain: 0
+            },
+            volume: volumeDb - 15
+          });
+          
+          drumMain.connect(destination);
+          drumNoise.connect(destination);
+          
+          return {
+            triggerAttackRelease: (note, duration, time) => {
+              drumMain.triggerAttackRelease('C1', duration, time);
+              drumNoise.triggerAttackRelease(duration, time);
+            },
+            volume: {
+              set value(val) {
+                drumMain.volume.value = val;
+                drumNoise.volume.value = val - 15;
+              }
+            },
+            dispose: () => {
+              drumMain.dispose();
+              drumNoise.dispose();
+              panner.dispose();
+            }
+          };
+        
+        default:
+          const defaultSynth = new Tone.Synth({ volume: volumeDb });
+          defaultSynth.connect(destination);
+          return {
+            ...defaultSynth,
+            dispose: () => {
+              defaultSynth.dispose();
+              panner.dispose();
+            }
+          };
+      }
+    }
+
+    function tokenize(content) {
+  let processed = content.replace(/\s*&\s*/g, '&');
+  
+  // > < 뒤에 오는 공백을 제거해서 음표에 붙여줌
+  processed = processed.replace(/([><]+)\s+/g, '$1');
+  
+  // > < 앞에 공백이 없으면 분리
+  processed = processed.replace(/([A-GR][+-]?\d*\.?)([><]+)/g, '$1 $2');
+  
+  processed = processed.replace(/([A-GR][+-]?\d*\.?(?:&[A-GR][+-]?\d*\.?)*)(?=[A-GR])/g, '$1 ');
+  
+  return processed
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+    function parseNote(token, defaultLength, defaultDotted) {
+  if (token.startsWith('T')) {
+    return {
+      type: 'tempo',
+      value: parseInt(token.slice(1))
+    };
+  }
+  
+  if (token.startsWith('V')) {
+    const vol = parseInt(token.slice(1));
+    if (vol >= 0 && vol <= 15) {
+      return {
+        type: 'volume',
+        value: vol
+      };
+    }
+  }
+  
+  if (token.startsWith('L')) {
+    const lMatch = token.slice(1).match(/^(\d+)(\.)?$/);
+    if (lMatch) {
+      return {
+        type: 'length',
+        value: parseInt(lMatch[1]),
+        dotted: !!lMatch[2]
+      };
+    }
+  }
+  
+  if (token.includes('&')) {
+    const tiedNotes = token.split('&');
+    const parsedNotes = [];
+    
+    tiedNotes.forEach(noteStr => {
+      const octaveMatch = noteStr.match(/^([><]+)/);
+      const octaveStr = octaveMatch ? octaveMatch[0] : '';
+      const noteStrClean = noteStr.slice(octaveStr.length);
+      
+      let octaveShift = 0;
+      for (let char of octaveStr) {
+        octaveShift += char === '>' ? 1 : -1;
+      }
+      
+      const match = noteStrClean.match(/^([A-GR])([+-])?(\d+)?(\.)?$/);
+      
+      if (match) {
+        const [_, pitch, accidental, duration, dot] = match;
+        parsedNotes.push({
+          octaveShift: octaveShift,
+          pitch: pitch,
+          accidental: accidental,
+          duration: duration ? parseInt(duration) : defaultLength,
+          isDotted: dot === '.' || (!duration && defaultDotted)
+        });
+      }
+    });
+    
+    if (parsedNotes.length > 0) {
+      return {
+        type: 'tied_note',
+        notes: parsedNotes
+      };
+    }
+    return null;
+  }
+  
+  const octaveMatch = token.match(/^([><]+)/);
+  const octaveStr = octaveMatch ? octaveMatch[0] : '';
+  const noteStr = token.slice(octaveStr.length);
+  
+  let octaveShift = 0;
+  for (let char of octaveStr) {
+    octaveShift += char === '>' ? 1 : -1;
+  }
+  
+  const match = noteStr.match(/^([A-GR])([+-])?(\d+)?(\.)?$/);
+  
+  if (!match) return null;
+  
+  const [_, pitch, accidental, duration, dot] = match;
+  
+  return {
+    type: 'note',
+    octaveShift: octaveShift,
+    pitch: pitch,
+    accidental: accidental,
+    duration: duration ? parseInt(duration) : defaultLength,
+    isDotted: dot === '.' || (!duration && defaultDotted)
+  };
+}
+
+    function parseChannel(instrument, content) {
+  const settings = {
+    instrument: instrument,
+    tempo: 120,
+    volume: 12,
+    defaultLength: 4,
+    defaultDotted: false
+  };
+  
+  const items = [];
+  const tokens = tokenize(content);
+  
+  tokens.forEach(token => {
+    const parsed = parseNote(token, settings.defaultLength, settings.defaultDotted);
+    if (parsed) {
+      if (parsed.type === 'tempo') {
+        settings.tempo = parsed.value;
+        items.push(parsed);
+      } else if (parsed.type === 'volume') {
+        settings.volume = parsed.value;
+        items.push(parsed);
+      } else if (parsed.type === 'length') {
+        settings.defaultLength = parsed.value;
+        settings.defaultDotted = parsed.dotted || false;
+        items.push(parsed);
+      } else if (parsed.type === 'note') {
+        items.push(parsed);
+      } else if (parsed.type === 'tied_note') {
+        items.push(parsed);
+      }
+    }
+  });
+  
+  return { settings, items };
+}
+
+    function toToneNote(note, octave) {
+      if (note.pitch === 'R') return null;
+      
+      let noteName = note.pitch;
+      if (note.accidental === '+') noteName += '#';
+      if (note.accidental === '-') noteName += 'b';
+      
+      return noteName + octave;
+    }
+
+    function getDuration(note, tempo) {
+  const wholeNote = (60 / tempo) * 4;
+  let duration = wholeNote / note.duration;
+  
+  if (note.isDotted) {
+    duration *= 1.5;
+  }
+  
+  return duration;
+}
+
+    function playChannel(channelData, globalTempo, activeChannelCount, startOffset = 0, channelId, useStereo = false, tempoMap = null) {
+  const { settings, items } = channelData;
+
+  const synth = createInstrument(settings.instrument, settings.volume, activeChannelCount, useStereo);
+  activeSynths.push(synth);
+
+  const timeline = [];
+
+  let currentBeat = 0;
+  let currentOctave = (settings.instrument === 'chalumeau') ? 3 : 4;
+
+  items.forEach(item => {
+    if (item.type === 'tempo') {
+      // 템포 맵에서 처리하므로 여기서는 무시
+      return;
+    }
+
+    if (item.type === 'volume') {
+      // 볼륨 변경 스케줄링
+      const volTime = tempoMap ? beatsToTime(currentBeat, tempoMap) : currentBeat * (60 / globalTempo);
+      if (volTime >= startOffset) {
+        const scheduleTime = volTime - startOffset;
+        const volumeReduction = Math.min(activeChannelCount * 2, 12);
+        const newVolumeDb = item.value === 0
+          ? -Infinity
+          : 20 * Math.log10(item.value / 12) - 10 - volumeReduction;
+        Tone.Transport.schedule((time) => {
+          synth.volume.value = newVolumeDb;
+        }, scheduleTime);
+      }
+      return;
+    }
+
+    if (item.type === 'length') {
+      return;
+    }
+
+    if (item.type === 'note') {
+      currentOctave += item.octaveShift;
+
+      let beatDur = 4 / item.duration;
+      if (item.isDotted) beatDur *= 1.5;
+
+      const noteStartTime = tempoMap ? beatsToTime(currentBeat, tempoMap) : currentBeat * (60 / globalTempo);
+      const noteEndTime = tempoMap ? beatsToTime(currentBeat + beatDur, tempoMap) : (currentBeat + beatDur) * (60 / globalTempo);
+      const durationSec = noteEndTime - noteStartTime;
+
+      timeline.push({
+        startTime: noteStartTime,
+        endTime: noteEndTime,
+        isRest: item.pitch === 'R'
+      });
+
+      if (noteEndTime > startOffset && item.pitch !== 'R') {
+        const finalNote = (settings.instrument === 'drum') ? 'C2' : toToneNote(item, currentOctave);
+
+        if (finalNote) {
+          let scheduleTime = noteStartTime - startOffset;
+          let playDuration = durationSec;
+
+          if (noteStartTime < startOffset) {
+            playDuration = noteEndTime - startOffset;
+            scheduleTime = 0;
+          }
+
+          if (playDuration > 0) {
+            Tone.Transport.schedule((time) => {
+              synth.triggerAttackRelease(finalNote, playDuration, time);
+            }, Math.max(0, scheduleTime));
+          }
+        }
+      }
+
+      currentBeat += beatDur;
+    }
+
+    if (item.type === 'tied_note') {
+      let totalBeatDur = 0;
+      let tieOctave = currentOctave;
+
+      item.notes.forEach(note => {
+        tieOctave += note.octaveShift;
+        let dur = 4 / note.duration;
+        if (note.isDotted) dur *= 1.5;
+        totalBeatDur += dur;
+      });
+
+      currentOctave = tieOctave;
+
+      const noteStartTime = tempoMap ? beatsToTime(currentBeat, tempoMap) : currentBeat * (60 / globalTempo);
+      const noteEndTime = tempoMap ? beatsToTime(currentBeat + totalBeatDur, tempoMap) : (currentBeat + totalBeatDur) * (60 / globalTempo);
+      const durationSec = noteEndTime - noteStartTime;
+
+      timeline.push({
+        startTime: noteStartTime,
+        endTime: noteEndTime,
+        isRest: item.notes[0].pitch === 'R'
+      });
+
+      const firstNote = item.notes[0];
+      if (noteEndTime > startOffset && firstNote.pitch !== 'R') {
+        const noteOctave = currentOctave - item.notes.slice(1).reduce((sum, n) => sum + n.octaveShift, 0);
+        const finalNote = (settings.instrument === 'drum') ? 'C2' : toToneNote(firstNote, noteOctave);
+
+        if (finalNote) {
+          let scheduleTime = noteStartTime - startOffset;
+          let playDuration = durationSec;
+
+          if (noteStartTime < startOffset) {
+            playDuration = noteEndTime - startOffset;
+            scheduleTime = 0;
+          }
+
+          if (playDuration > 0) {
+            Tone.Transport.schedule((time) => {
+              synth.triggerAttackRelease(finalNote, playDuration, time);
+            }, Math.max(0, scheduleTime));
+          }
+        }
+      }
+
+      currentBeat += totalBeatDur;
+    }
+  });
+
+  if (channelId !== undefined) {
+    channelTimelines[channelId] = timeline;
+  }
+}
+
+    async function play(startFromTime = 0) {
+  try {
+    await Tone.start();
+
+    if (isPlaying) {
+      stop();
+    }
+
+    if (!masterCompressor) {
+      const limiter = new Tone.Limiter(-0.5).toDestination();
+      masterCompressor = new Tone.Compressor({
+        threshold: -10,
+        ratio: 4,
+        attack: 0.003,
+        release: 0.1
+      }).connect(limiter);
+    }
+
+    if (startFromTime === 0) {
+      const tempoInput = document.getElementById('tempoInput').value;
+      const tempoMatch = tempoInput.match(/T(\d+)/);
+      currentGlobalTempo = tempoMatch ? parseInt(tempoMatch[1]) : 120;
+      currentActiveChannelCount = channels.filter(ch => ch.enabled && ch.notation.trim()).length;
+    }
+
+    Tone.Transport.bpm.value = currentGlobalTempo;
+
+    // 모든 활성 채널의 파싱 데이터 수집
+    const activeChannels = channels.filter(ch => ch.enabled && ch.notation.trim());
+    const channelDataList = activeChannels.map(ch => parseChannel(ch.instrument, ch.notation));
+
+    // 글로벌 템포 맵 구축
+    const tempoMap = buildGlobalTempoMap(channelDataList, currentGlobalTempo);
+    currentPlaybackTempoMap = tempoMap;
+
+    // 총 재생 시간 계산
+    let maxBeats = 0;
+    channelDataList.forEach(cd => {
+      const beats = getTotalBeats(cd, currentGlobalTempo);
+      if (beats > maxBeats) maxBeats = beats;
+    });
+    playbackDuration = beatsToTime(maxBeats, tempoMap);
+
+    playbackStartTime = Tone.now();
+    channelTimelines = {};
+
+    document.querySelectorAll('.editable-text').forEach(el => {
+      el.contentEditable = 'false';
+      el.classList.add('disabled');
+    });
+
+    activeChannels.forEach((channel, index) => {
+      playChannel(channelDataList[index], currentGlobalTempo, currentActiveChannelCount, startFromTime, channel.id, channel.stereo, tempoMap);
+    });
+
+    Tone.Transport.start();
+    isPlaying = true;
+
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.classList.add('disabled');
+      playBtn.disabled = true;
+    }
+
+    updateProgressBar(startFromTime);
+
+    if (transportStopHandler) {
+      Tone.Transport.off('stop', transportStopHandler);
+    }
+    transportStopHandler = () => {
+      if (isPlaying) {
+        stop();
+      }
+    };
+    Tone.Transport.on('stop', transportStopHandler);
+
+    if (autoStopTimer) {
+      clearTimeout(autoStopTimer);
+      autoStopTimer = null;
+    }
+
+    const remainingDuration = playbackDuration - startFromTime;
+    if (remainingDuration > 0) {
+      autoStopTimer = setTimeout(() => {
+        if (isPlaying) stop();
+      }, remainingDuration * 1000 + 500);
+    } else {
+      stop();
+    }
+  } catch (error) {
+    console.error('재생 오류:', error);
+    alert('재생 중 오류가 발생했습니다: ' + error.message);
+    stop();
+  }
+}
+    
+    function updateProgressBar(startOffset = 0) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      
+      progressInterval = setInterval(() => {
+        if (!isPlaying) {
+          clearInterval(progressInterval);
+          return;
+        }
+        
+        const elapsed = (Tone.now() - playbackStartTime) + startOffset;
+        const progress = Math.min((elapsed / playbackDuration) * 100, 100);
+        
+        const progressFill = document.getElementById('progressFill');
+        const progressTime = document.getElementById('progressTime');
+        
+        if (progressFill) {
+          progressFill.style.width = progress + '%';
+        }
+        
+        if (progressTime) {
+          const currentMin = Math.floor(elapsed / 60);
+          const currentSec = Math.floor(elapsed % 60);
+          const totalMin = Math.floor(playbackDuration / 60);
+          const totalSec = Math.floor(playbackDuration % 60);
+          
+          progressTime.textContent = `${currentMin}:${currentSec.toString().padStart(2, '0')} / ${totalMin}:${totalSec.toString().padStart(2, '0')}`;
+        }
+        
+        updatePlayingHighlight(elapsed);
+      }, 100);
+    }
+    
+    function updatePlayingHighlight(currentTime) {
+      channels.forEach(channel => {
+        if (!channel.enabled || !channel.notation.trim()) return;
+        
+        const timeline = channelTimelines[channel.id];
+        if (!timeline) return;
+        
+        const div = document.querySelector(`[data-channel-id="${channel.id}"] .editable-text`);
+        if (!div) return;
+        
+        const hasPlayingNote = timeline.some(entry => 
+          currentTime >= entry.startTime && currentTime < entry.endTime
+        );
+        
+        if (!hasPlayingNote) {
+          div.innerHTML = colorSyntax(channel.notation);
+          div.classList.remove('playing-active');
+          return;
+        }
+        
+        div.classList.add('playing-active');
+        
+        const tokens = tokenize(channel.notation);
+        const tokenTimeline = buildTokenTimeline(tokens, channel.instrument);
+        
+        let highlighted = '';
+        tokens.forEach((token, index) => {
+          const tokenTime = tokenTimeline[index];
+          const cmdColored = token.replace(/([VLT]\d+|[><]+)/g, '<span class="cmd">$1</span>');
+          
+          if (tokenTime && currentTime >= tokenTime.startTime && currentTime < tokenTime.endTime) {
+            highlighted += `<span class="playing">${cmdColored}</span> `;
+          } else {
+            highlighted += cmdColored + ' ';
+          }
+        });
+        
+        div.innerHTML = highlighted.trim();
+        
+        const playingSpan = div.querySelector('.playing');
+        if (playingSpan) {
+          const divRect = div.getBoundingClientRect();
+          const spanRect = playingSpan.getBoundingClientRect();
+          
+          if (spanRect.top < divRect.top || spanRect.bottom > divRect.bottom) {
+            const scrollOffset = spanRect.top - divRect.top - (divRect.height / 2) + (spanRect.height / 2);
+            div.scrollTop += scrollOffset;
+          }
+        }
+      });
+    }
+    
+    function buildTokenTimeline(tokens, instrument, tempoMapOverride) {
+  const timeline = [];
+  let currentBeat = 0;
+  let defaultLength = 4;
+  let defaultDotted = false;
+
+  // 현재 재생에서 사용 중인 tempoMap 가져오기
+  const tempoMap = tempoMapOverride || currentPlaybackTempoMap || [[0, currentGlobalTempo || 120]];
+
+  tokens.forEach(token => {
+    const parsed = parseNote(token, defaultLength, defaultDotted);
+
+    if (!parsed) {
+      timeline.push(null);
+      return;
+    }
+
+    if (parsed.type === 'tempo') {
+      timeline.push(null);
+    } else if (parsed.type === 'volume') {
+      timeline.push(null);
+    } else if (parsed.type === 'length') {
+      defaultLength = parsed.value;
+      defaultDotted = parsed.dotted || false;
+      timeline.push(null);
+    } else if (parsed.type === 'note') {
+      let beatDur = 4 / parsed.duration;
+      if (parsed.isDotted) beatDur *= 1.5;
+
+      const startTime = beatsToTime(currentBeat, tempoMap);
+      const endTime = beatsToTime(currentBeat + beatDur, tempoMap);
+
+      timeline.push({
+        startTime: startTime,
+        endTime: endTime,
+        isRest: parsed.pitch === 'R'
+      });
+      currentBeat += beatDur;
+    } else if (parsed.type === 'tied_note') {
+      let totalBeatDur = 0;
+      parsed.notes.forEach(note => {
+        let dur = 4 / note.duration;
+        if (note.isDotted) dur *= 1.5;
+        totalBeatDur += dur;
+      });
+
+      const startTime = beatsToTime(currentBeat, tempoMap);
+      const endTime = beatsToTime(currentBeat + totalBeatDur, tempoMap);
+
+      timeline.push({
+        startTime: startTime,
+        endTime: endTime,
+        isRest: parsed.notes[0].pitch === 'R'
+      });
+      currentBeat += totalBeatDur;
+    }
+  });
+
+  return timeline;
+}
+
+    function calculateMaxDuration(channels, globalTempo) {
+  const activeChannels = channels.filter(ch => ch.enabled && ch.notation.trim());
+  const channelDataList = activeChannels.map(ch => parseChannel(ch.instrument, ch.notation));
+  const tempoMap = buildGlobalTempoMap(channelDataList, globalTempo);
+
+  let maxDuration = 0;
+  const durations = [];
+
+  channels.forEach((channel, index) => {
+    if (!channel.enabled || !channel.notation.trim()) {
+      durations.push({ index: index + 1, instrument: channel.instrument, duration: 0 });
+      return;
+    }
+
+    const channelData = parseChannel(channel.instrument, channel.notation);
+    const totalBeats = getTotalBeats(channelData, globalTempo);
+    const totalTime = beatsToTime(totalBeats, tempoMap);
+
+    durations.push({
+      index: index + 1,
+      instrument: channel.instrument,
+      duration: totalTime
+    });
+
+    if (totalTime > maxDuration) {
+      maxDuration = totalTime;
+    }
+  });
+
+  checkLengthDifferences(durations, maxDuration);
+
+  return maxDuration;
+}
+
+    // ===== 새 함수 1: 모든 채널에서 템포 변경 이벤트를 박자 기준으로 수집 =====
+function buildGlobalTempoMap(channelDataList, globalTempo) {
+  // {beatPosition: tempo} 형태로 수집
+  const tempoEvents = new Map();
+  tempoEvents.set(0, globalTempo);
+
+  channelDataList.forEach(channelData => {
+    const { items } = channelData;
+    let currentBeat = 0;
+    let currentTempo = globalTempo;
+
+    items.forEach(item => {
+      if (item.type === 'tempo') {
+        if (item.value !== currentTempo) {
+          // 이미 같은 박자에 다른 템포가 있으면 나중 것이 이김
+          tempoEvents.set(currentBeat, item.value);
+          currentTempo = item.value;
+        }
+      } else if (item.type === 'note') {
+        const wholeNote = 4; // 온음표 = 4박
+        let dur = wholeNote / item.duration;
+        if (item.isDotted) dur *= 1.5;
+        currentBeat += dur;
+      } else if (item.type === 'tied_note') {
+        item.notes.forEach(note => {
+          const wholeNote = 4;
+          let dur = wholeNote / note.duration;
+          if (note.isDotted) dur *= 1.5;
+          currentBeat += dur;
+        });
+      }
+    });
+  });
+
+  // 박자 순으로 정렬된 배열로 변환
+  const sorted = Array.from(tempoEvents.entries())
+    .sort((a, b) => a[0] - b[0]);
+
+  return sorted; // [[beatPos, tempo], ...]
+}
+
+// ===== 새 함수 2: 박자 위치를 실제 시간(초)으로 변환 =====
+function beatsToTime(beatPosition, tempoMap) {
+  let time = 0;
+  let prevBeat = 0;
+  let prevTempo = tempoMap[0][1]; // 초기 템포
+
+  for (let i = 0; i < tempoMap.length; i++) {
+    const [mapBeat, mapTempo] = tempoMap[i];
+
+    if (mapBeat >= beatPosition) break;
+
+    if (mapBeat > prevBeat) {
+      const beatDiff = mapBeat - prevBeat;
+      time += beatDiff * (60 / prevTempo);
+    }
+
+    prevBeat = mapBeat;
+    prevTempo = mapTempo;
+  }
+
+  // 남은 박자
+  const remainingBeats = beatPosition - prevBeat;
+  time += remainingBeats * (60 / prevTempo);
+
+  return time;
+}
+
+// ===== 새 함수 3: 총 재생 시간을 템포 맵 기반으로 계산 =====
+function getTotalBeats(channelData, globalTempo) {
+  const { items } = channelData;
+  let totalBeats = 0;
+
+  items.forEach(item => {
+    if (item.type === 'note') {
+      let dur = 4 / item.duration;
+      if (item.isDotted) dur *= 1.5;
+      totalBeats += dur;
+    } else if (item.type === 'tied_note') {
+      item.notes.forEach(note => {
+        let dur = 4 / note.duration;
+        if (note.isDotted) dur *= 1.5;
+        totalBeats += dur;
+      });
+    }
+  });
+
+  return totalBeats;
+}
+    
+    function checkLengthDifferences(durations, maxDuration) {
+      const warningDiv = document.getElementById('lengthWarning');
+      
+      if (!warningDiv) return;
+      
+      const nonEmptyDurations = durations.filter(d => d.duration > 0);
+      
+      if (nonEmptyDurations.length <= 1) {
+        warningDiv.classList.remove('show');
+        return;
+      }
+      
+      const hasDifference = nonEmptyDurations.some(d => 
+        Math.abs(d.duration - maxDuration) > 0.01
+      );
+      
+      if (hasDifference) {
+        const tempoInput = document.getElementById('tempoInput').value;
+        const tempoMatch = tempoInput.match(/T(\d+)/);
+        const currentTempo = tempoMatch ? parseInt(tempoMatch[1]) : 120;
+        
+        const warnings = [];
+        
+        nonEmptyDurations.forEach(d => {
+          const diff = maxDuration - d.duration;
+          if (Math.abs(diff) > 0.01) {
+            const diffInBeats = diff / (60 / currentTempo);
+            const noteLength = Math.round(4 / diffInBeats);
+            const isDotted = Math.abs(diffInBeats - (4 / noteLength) * 1.5) < 0.1;
+            
+            let lengthStr;
+            if (isDotted) {
+              lengthStr = `L${Math.round(noteLength / 1.5)}.`;
+            } else if (noteLength > 0 && noteLength < 100) {
+              lengthStr = `L${noteLength}`;
+            } else {
+              lengthStr = `약 ${Math.abs(diff).toFixed(2)}초`;
+            }
+            
+            warnings.push(`<div class="length-warning-item">채널 ${d.index}의 길이가 ${lengthStr} 만큼 짧습니다</div>`);
+          }
+        });
+        
+        warningDiv.innerHTML = `<strong>채널 길이 불일치</strong><br>${warnings.join('')}`;
+        warningDiv.classList.add('show');
+      } else {
+        warningDiv.classList.remove('show');
+      }
+    }
+    
+    function checkChannelLengths() {
+      const tempoInput = document.getElementById('tempoInput').value;
+      const tempoMatch = tempoInput.match(/T(\d+)/);
+      const globalTempo = tempoMatch ? parseInt(tempoMatch[1]) : 120;
+      
+      calculateMaxDuration(channels, globalTempo);
+    }
+
+    function stop() {
+      Tone.Transport.stop();
+      Tone.Transport.cancel();
+      
+      activeSynths.forEach(synth => {
+        try {
+          if (synth.dispose) {
+            synth.dispose();
+          }
+        } catch (e) {
+          console.warn('신스 dispose 오류:', e);
+        }
+      });
+      activeSynths = [];
+      
+      if (masterCompressor) {
+        try {
+          masterCompressor.dispose();
+          masterCompressor = null;
+        } catch (e) {
+          console.warn('컴프레서 dispose 오류:', e);
+        }
+      }
+      
+      if (transportStopHandler) {
+        Tone.Transport.off('stop', transportStopHandler);
+        transportStopHandler = null;
+      }
+      
+      if (autoStopTimer) {
+        clearTimeout(autoStopTimer);
+        autoStopTimer = null;
+      }
+      
+      currentPlaybackTempoMap = null;
+      isPlaying = false;
+      
+      const playBtn = document.getElementById('playBtn');
+      if (playBtn) {
+        playBtn.classList.remove('disabled');
+        playBtn.disabled = false;
+      }
+      
+      document.querySelectorAll('.editable-text').forEach(el => {
+        el.contentEditable = 'true';
+        el.classList.remove('disabled');
+      });
+      
+      channels.forEach(channel => {
+        const div = document.querySelector(`[data-channel-id="${channel.id}"] .editable-text`);
+        if (div && channel.notation) {
+          div.innerHTML = colorSyntax(channel.notation);
+          div.classList.remove('playing-active');
+        }
+      });
+      
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+      
+      const progressFill = document.getElementById('progressFill');
+      const progressTime = document.getElementById('progressTime');
+      
+      if (progressFill) {
+        progressFill.style.width = '0%';
+      }
+      
+      if (progressTime) {
+        progressTime.textContent = '0:00 / 0:00';
+      }
+    }
+    
+    function seekToPosition(event) {
+      const progressBar = document.getElementById('progressBar');
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+      const newTime = percentage * playbackDuration;
+      
+      if (!isPlaying) {
+        play(newTime);
+      } else {
+        play(newTime);
+      }
+    }
+
+    function exportToFile() {
+  const tempoInput = document.getElementById('tempoInput').value;
+  
+  let content = tempoInput + '\n\n';
+  
+  channels.forEach((channel, index) => {
+    content += `# ${channel.notation}\n`;
+    
+    if (index < channels.length - 1) {
+      content += '\n\n\n\n';
+    }
+  });
+  
+  const fileName = prompt('파일명을 입력하세요', 'music.txt');
+  if (!fileName) return;
+  
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName.endsWith('.txt') ? fileName : fileName + '.txt';
+  
+  document.body.appendChild(link);
+  link.click();
+  
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+    
+    function loadFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.name.endsWith('.txt')) {
+    const warningDiv = document.getElementById('fileWarning');
+    if (warningDiv) {
+      warningDiv.innerHTML = '<strong>파일 형식 오류</strong><br>TXT 파일만 불러올 수 있습니다.';
+      warningDiv.classList.add('show');
+      setTimeout(() => { warningDiv.classList.remove('show'); }, 3000);
+    }
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const lines = text.split('\n');
+
+    // MML Converter 포맷인지 감지
+    const isConverterFormat = lines.some(line =>
+      /^.+Staff\s+\d+\s+.+#\s*T\d+/.test(line.trim())
+    );
+
+    if (isConverterFormat) {
+      loadConverterFormat(lines);
+    } else {
+      loadSimpleFormat(lines);
+    }
+
+    renderChannels();
+    checkChannelLengths();
+    event.target.value = '';
+  };
+
+  reader.readAsText(file);
+}
+
+function loadConverterFormat(lines) {
+  channels = [];
+  channelIdCounter = 0;
+
+  const instrumentMap = {
+  'piano': 'piano',
+  'contrabass': 'violin',
+  'violoncello': 'violin',
+  'cello': 'violin',
+  'viola': 'violin',
+  'violin': 'violin',
+  'fiddle': 'violin',
+  'strings': 'violin',
+  'harmonica': 'chalumeau',
+  'clarinet': 'chalumeau',
+  'oboe': 'chalumeau',
+  'bassoon': 'chalumeau',
+  'saxophone': 'chalumeau',
+  'trumpet': 'chalumeau',
+  'trombone': 'chalumeau',
+  'horn': 'chalumeau',
+  'tuba': 'chalumeau',
+  'drumset': 'drum',
+  'drum': 'drum',
+  'percussion': 'drum',
+  'glockenspiel': 'harp',
+  'celesta': 'harp',
+  'vibraphone': 'harp',
+  'marimba': 'harp',
+  'xylophone': 'harp',
+  'flute': 'flute',
+  'piccolo': 'flute',
+  'recorder': 'flute',
+  'lute': 'lute',
+  'guitar': 'lute',
+  'banjo': 'lute',
+  'mandolin': 'lute',
+  'ukulele': 'lute',
+  'harp': 'harp',
+  'chalumeau': 'chalumeau'
+};
+
+  // 헤더 패턴: "악기명 Staff N 설명 # T숫자"
+  const headerPattern = /^(.+?)\s+Staff\s+\d+\s+(.+?)\s*#\s*T(\d+)/;
+
+  let globalTempo = null;
+  let currentInstrument = 'piano';
+  let currentNotation = '';
+  let currentLabel = '';
+  let firstHeader = true;
+
+  function pushChannel() {
+    const trimmed = currentNotation.trim();
+    if (trimmed && trimmed !== '') {
+      // 쉼표만으로 이루어진 채널은 건너뛰기
+      const withoutRests = trimmed.replace(/R\d*\.?\s*/g, '').replace(/V\d+\s*/g, '').replace(/L\d+\.?\s*/g, '').trim();
+      const id = channelIdCounter++;
+      channels.push({
+        id: id,
+        instrument: currentInstrument,
+        notation: trimmed,
+        enabled: withoutRests.length > 0,  // 쉼표만이면 꺼짐
+        stereo: false
+      });
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const headerMatch = line.match(headerPattern);
+
+    if (headerMatch) {
+      // 이전 채널 저장
+      if (!firstHeader) {
+        pushChannel();
+      }
+      firstHeader = false;
+
+      const rawInstrument = headerMatch[1].trim().toLowerCase();
+      const label = headerMatch[2].trim();
+      const tempo = parseInt(headerMatch[3]);
+
+      if (!globalTempo) {
+        globalTempo = tempo;
+        document.getElementById('tempoInput').value = 'T' + tempo;
+      }
+
+      // 악기 매핑
+      currentInstrument = 'piano';
+      for (const [key, value] of Object.entries(instrumentMap)) {
+        if (rawInstrument.includes(key)) {
+          currentInstrument = value;
+          break;
+        }
+      }
+
+      currentLabel = label;
+      currentNotation = '';
+    } else if (line !== '') {
+      // 노테이션 라인 추가
+      if (currentNotation) {
+        currentNotation += '\n' + line;
+      } else {
+        currentNotation = line;
+      }
+    }
+  }
+
+  // 마지막 채널 저장
+  pushChannel();
+
+  if (channels.length === 0) {
+    addChannel();
+  }
+}
+
+function loadSimpleFormat(lines) {
+  channels = [];
+  channelIdCounter = 0;
+
+  let startIndex = 0;
+  if (lines[0] && lines[0].trim().startsWith('T')) {
+    document.getElementById('tempoInput').value = lines[0].trim();
+    startIndex = 1;
+  } else {
+    document.getElementById('tempoInput').value = 'T120';
+  }
+
+  let currentNotation = '';
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    if (line.startsWith('#')) {
+      if (currentNotation.trim() !== '') {
+        const id = channelIdCounter++;
+        channels.push({
+          id: id,
+          instrument: 'piano',
+          notation: currentNotation.trim(),
+          enabled: true,
+          stereo: false
+        });
+      }
+      currentNotation = line.slice(1).trim();
+    } else if (line) {
+      if (currentNotation) {
+        currentNotation += ' ' + line;
+      } else {
+        currentNotation = line;
+      }
+    }
+  }
+
+  if (currentNotation.trim() !== '') {
+    const id = channelIdCounter++;
+    channels.push({
+      id: id,
+      instrument: 'piano',
+      notation: currentNotation.trim(),
+      enabled: true,
+      stereo: false
+    });
+  }
+
+  if (channels.length === 0) {
+    addChannel();
+  }
+}
+  </script>
+</body>
+</html>
